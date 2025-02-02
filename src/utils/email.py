@@ -3,6 +3,7 @@ from typing import Optional
 
 import boto3
 from aws_lambda_powertools import Logger
+
 from models.common import Booking, Customer
 
 logger = Logger()

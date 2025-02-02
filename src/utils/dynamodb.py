@@ -1,20 +1,14 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Dict, List, Optional, TypeVar, Generic, Any
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 from uuid import UUID, uuid4
 
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Attr, Key
 from mypy_boto3_dynamodb.service_resource import Table
 from pydantic import BaseModel
 
-from models.common import (
-    Booking,
-    BookingStatus,
-    Customer,
-    PricingRule,
-    BlockedDate,
-)
+from models.common import BlockedDate, Booking, BookingStatus, Customer, PricingRule
 
 T = TypeVar("T", bound=BaseModel)
 
