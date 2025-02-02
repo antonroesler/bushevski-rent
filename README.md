@@ -1,5 +1,8 @@
 # Bushevski Camper Rental Backend
 
+[![CI](https://github.com/antonroesler/bushevski-rent/actions/workflows/ci.yml/badge.svg)](https://github.com/antonroesler/bushevski-rent/actions/workflows/ci.yml)
+[![CD](https://github.com/antonroesler/bushevski-rent/actions/workflows/cd.yml/badge.svg)](https://github.com/antonroesler/bushevski-rent/actions/workflows/cd.yml)
+
 Serverless backend for the Bushevski Camper Rental service built with AWS SAM, Lambda, and DynamoDB.
 
 ## Prerequisites
@@ -146,3 +149,21 @@ Single-table design with the following access patterns:
 ## License
 
 Proprietary - All rights reserved
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment:
+
+### CI Pipeline
+
+- Runs on every push and pull request
+- Executes all tests
+- Performs code linting and formatting checks
+- Generates code coverage reports
+
+### CD Pipeline
+
+- Automatically deploys to development environment on push to main
+- Manual deployment to production via workflow dispatch
+- Uses OpenID Connect for secure AWS authentication
+- Manages infrastructure using AWS SAM
