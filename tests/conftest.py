@@ -5,7 +5,10 @@ from uuid import uuid4
 
 import boto3
 import pytest
-from moto import mock_dynamodb, mock_s3, mock_ses, mock_ssm
+from moto.dynamodb import mock_dynamodb2
+from moto.s3 import mock_s3
+from moto.ses import mock_ses
+from moto.ssm import mock_ssm
 from mypy_boto3_dynamodb.service_resource import Table
 
 from models.common import (
@@ -35,7 +38,7 @@ def aws_credentials() -> None:
 
 @pytest.fixture(scope="function")
 def dynamodb(aws_credentials: None) -> Generator:
-    with mock_dynamodb():
+    with mock_dynamodb2():
         yield boto3.resource("dynamodb")
 
 

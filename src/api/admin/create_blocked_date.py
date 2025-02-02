@@ -19,7 +19,7 @@ class CreateBlockedDateRequest(BaseModel):
     start_date: str
     end_date: str
     reason: BlockedDateReason
-    notes: str = None
+    notes: str | None = None
 
 
 @tracer.capture_lambda_handler

@@ -3,7 +3,7 @@ from typing import Generic, TypeVar
 from uuid import UUID
 
 import boto3
-from boto3.dynamodb.conditions import Attr, Key
+from boto3.dynamodb.conditions import Attr, ConditionBase, Key
 from mypy_boto3_dynamodb.service_resource import Table
 from pydantic import BaseModel
 
@@ -47,7 +47,9 @@ class BookingRepository(DynamoDBRepository[Booking]):
         end_month = self._format_date(end_date)
 
         # Query conditions
-        key_condition = Key("GSI1PK").between(f"DATE#{start_month}", f"DATE#{end_month}")
+        key_condition: ConditionBase = Key("GSI1PK").between(
+            f"DATE#{start_month}", f"DATE#{end_month}"
+        )
 
         if status:
             key_condition = key_condition & Key("GSI1SK").eq(f"STATUS#{status}")

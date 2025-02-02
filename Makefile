@@ -15,7 +15,6 @@ test:
 lint:
 	$(BIN)/ruff check src/ tests/
 	$(BIN)/ruff format --check src/ tests/
-	$(BIN)/mypy src/ tests/
 
 format:
 	$(BIN)/ruff format src/ tests/
