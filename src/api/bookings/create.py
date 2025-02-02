@@ -60,9 +60,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
 
     try:
         # Validate minimum stay
-        pricing_service.validate_minimum_stay(
-            booking_request.start_date, booking_request.end_date
-        )
+        pricing_service.validate_minimum_stay(booking_request.start_date, booking_request.end_date)
 
         # Calculate fees
         fees = pricing_service.calculate_fees(
@@ -108,7 +106,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
     try:
         email_service.send_booking_confirmation(booking, customer)
     except Exception as e:
-        logger.error(f"Failed to send confirmation email: {str(e)}")
+        logger.error(f"Failed to send confirmation email: {e!s}")
         # Don't fail the booking creation if email fails
 
     # Create response

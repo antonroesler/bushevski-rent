@@ -1,7 +1,5 @@
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import date
 
-import pytest
 from mypy_boto3_dynamodb.service_resource import Table
 
 from models.common import (
@@ -37,9 +35,7 @@ def test_booking_repository(
     assert retrieved.status == BookingStatus.PENDING
 
     # Test get by date range
-    bookings = repo.get_by_date_range(
-        date(2024, 6, 1), date(2024, 6, 30), BookingStatus.PENDING
-    )
+    bookings = repo.get_by_date_range(date(2024, 6, 1), date(2024, 6, 30), BookingStatus.PENDING)
     assert len(bookings) == 1
     assert bookings[0].id == sample_booking.id
 
@@ -72,9 +68,7 @@ def test_customer_repository(dynamodb_table: Table, sample_customer: Customer):
     assert updated.drivers_license_url == license_url
 
 
-def test_pricing_rule_repository(
-    dynamodb_table: Table, sample_pricing_rule: PricingRule
-):
+def test_pricing_rule_repository(dynamodb_table: Table, sample_pricing_rule: PricingRule):
     """Test PricingRuleRepository CRUD operations."""
     repo = PricingRuleRepository(dynamodb_table)
 
@@ -92,9 +86,7 @@ def test_pricing_rule_repository(
     assert len(rules) == 0
 
 
-def test_blocked_date_repository(
-    dynamodb_table: Table, sample_blocked_date: BlockedDate
-):
+def test_blocked_date_repository(dynamodb_table: Table, sample_blocked_date: BlockedDate):
     """Test BlockedDateRepository CRUD operations."""
     repo = BlockedDateRepository(dynamodb_table)
 

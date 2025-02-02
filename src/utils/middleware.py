@@ -1,12 +1,12 @@
 import functools
 import json
+from collections.abc import Callable
 from decimal import Decimal
-from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union
+from typing import Any, TypeVar
 from uuid import UUID
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
-from aws_lambda_powertools.event_handler import APIGatewayRestResolver
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from pydantic import BaseModel, ValidationError
 
@@ -33,7 +33,7 @@ def handle_errors(func: Callable) -> Callable:
         try:
             return func(*args, **kwargs)
         except ValidationError as e:
-            logger.warning(f"Validation error: {str(e)}")
+            logger.warning(f"Validation error: {e!s}")
             return {
                 "statusCode": 400,
                 "body": json.dumps(
@@ -42,7 +42,7 @@ def handle_errors(func: Callable) -> Callable:
                 ),
             }
         except ValueError as e:
-            logger.warning(f"Value error: {str(e)}")
+            logger.warning(f"Value error: {e!s}")
             return {
                 "statusCode": 400,
                 "body": json.dumps(
@@ -50,7 +50,7 @@ def handle_errors(func: Callable) -> Callable:
                 ),
             }
         except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
+            logger.error(f"Unexpected error: {e!s}")
             return {
                 "statusCode": 500,
                 "body": json.dumps(
@@ -65,7 +65,7 @@ def handle_errors(func: Callable) -> Callable:
     return wrapper
 
 
-def validate_admin_api_key(event: Dict[str, Any]) -> bool:
+def validate_admin_api_key(event: dict[str, Any]) -> bool:
     """Validate admin API key from request headers."""
     headers = event.get("headers", {})
     api_key = headers.get("x-api-key")
@@ -75,9 +75,9 @@ def validate_admin_api_key(event: Dict[str, Any]) -> bool:
 
     # Get API key from SSM Parameter Store
     ssm = boto3.client("ssm")
-    stored_key = ssm.get_parameter(
-        Name="/bushevski/admin/api_key", WithDecryption=True
-    )["Parameter"]["Value"]
+    stored_key = ssm.get_parameter(Name="/bushevski/admin/api_key", WithDecryption=True)[
+        "Parameter"
+    ]["Value"]
 
     return api_key == stored_key
 
@@ -86,7 +86,7 @@ def require_admin(func: Callable) -> Callable:
     """Decorator to require admin API key."""
 
     @functools.wraps(func)
-    def wrapper(event: Dict[str, Any], context: LambdaContext):
+    def wrapper(event: dict[str, Any], context: LambdaContext):
         if not validate_admin_api_key(event):
             return {
                 "statusCode": 401,
@@ -99,12 +99,12 @@ def require_admin(func: Callable) -> Callable:
     return wrapper
 
 
-def parse_body(model: Type[T]) -> Callable:
+def parse_body(model: type[T]) -> Callable:
     """Decorator to parse and validate request body using Pydantic model."""
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        def wrapper(event: Dict[str, Any], context: LambdaContext):
+        def wrapper(event: dict[str, Any], context: LambdaContext):
             try:
                 body = json.loads(event.get("body", "{}"))
                 parsed_body = model.model_validate(body)
@@ -123,9 +123,7 @@ def parse_body(model: Type[T]) -> Callable:
             except ValidationError as e:
                 return {
                     "statusCode": 400,
-                    "body": json.dumps(
-                        {"error": "Validation Error", "details": e.errors()}
-                    ),
+                    "body": json.dumps({"error": "Validation Error", "details": e.errors()}),
                 }
 
         return wrapper
@@ -135,9 +133,9 @@ def parse_body(model: Type[T]) -> Callable:
 
 def create_response(
     status_code: int,
-    body: Union[Dict[str, Any], BaseModel, None] = None,
-    headers: Optional[Dict[str, str]] = None,
-) -> Dict[str, Any]:
+    body: dict[str, Any] | BaseModel | None = None,
+    headers: dict[str, str] | None = None,
+) -> dict[str, Any]:
     """Create API Gateway response with consistent format."""
     response = {
         "statusCode": status_code,

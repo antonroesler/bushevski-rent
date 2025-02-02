@@ -1,7 +1,6 @@
 from datetime import date, datetime
-from decimal import Decimal
-from typing import Any, Dict, Generic, List, Optional, TypeVar
-from uuid import UUID, uuid4
+from typing import Generic, TypeVar
+from uuid import UUID
 
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
@@ -34,25 +33,21 @@ class BookingRepository(DynamoDBRepository[Booking]):
         }
         self.table.put_item(Item=item)
 
-    def get(self, booking_id: UUID) -> Optional[Booking]:
-        response = self.table.get_item(
-            Key={"PK": f"BOOKING#{booking_id}", "SK": "METADATA"}
-        )
+    def get(self, booking_id: UUID) -> Booking | None:
+        response = self.table.get_item(Key={"PK": f"BOOKING#{booking_id}", "SK": "METADATA"})
         if "Item" not in response:
             return None
         return Booking.model_validate(response["Item"])
 
     def get_by_date_range(
-        self, start_date: date, end_date: date, status: Optional[BookingStatus] = None
-    ) -> List[Booking]:
+        self, start_date: date, end_date: date, status: BookingStatus | None = None
+    ) -> list[Booking]:
         # Convert dates to month format for GSI1PK
         start_month = self._format_date(start_date)
         end_month = self._format_date(end_date)
 
         # Query conditions
-        key_condition = Key("GSI1PK").between(
-            f"DATE#{start_month}", f"DATE#{end_month}"
-        )
+        key_condition = Key("GSI1PK").between(f"DATE#{start_month}", f"DATE#{end_month}")
 
         if status:
             key_condition = key_condition & Key("GSI1SK").eq(f"STATUS#{status}")
@@ -89,10 +84,8 @@ class CustomerRepository(DynamoDBRepository[Customer]):
         }
         self.table.put_item(Item=item)
 
-    def get(self, email: str) -> Optional[Customer]:
-        response = self.table.get_item(
-            Key={"PK": f"CUSTOMER#{email}", "SK": "METADATA"}
-        )
+    def get(self, email: str) -> Customer | None:
+        response = self.table.get_item(Key={"PK": f"CUSTOMER#{email}", "SK": "METADATA"})
         if "Item" not in response:
             return None
         return Customer.model_validate(response["Item"])
@@ -119,7 +112,7 @@ class PricingRuleRepository(DynamoDBRepository[PricingRule]):
         }
         self.table.put_item(Item=item)
 
-    def get_by_date_range(self, start_date: date, end_date: date) -> List[PricingRule]:
+    def get_by_date_range(self, start_date: date, end_date: date) -> list[PricingRule]:
         start_month = self._format_date(start_date)
         end_month = self._format_date(end_date)
 
@@ -143,7 +136,7 @@ class BlockedDateRepository(DynamoDBRepository[BlockedDate]):
         }
         self.table.put_item(Item=item)
 
-    def get_by_date_range(self, start_date: date, end_date: date) -> List[BlockedDate]:
+    def get_by_date_range(self, start_date: date, end_date: date) -> list[BlockedDate]:
         start_month = self._format_date(start_date)
         end_month = self._format_date(end_date)
 
@@ -159,7 +152,7 @@ class BlockedDateRepository(DynamoDBRepository[BlockedDate]):
 def get_table() -> Table:
     """Get DynamoDB table instance."""
     dynamodb = boto3.resource("dynamodb")
-    table_name = boto3.client("ssm").get_parameter(
-        Name="/bushevski/dynamodb/table_name"
-    )["Parameter"]["Value"]
+    table_name = boto3.client("ssm").get_parameter(Name="/bushevski/dynamodb/table_name")[
+        "Parameter"
+    ]["Value"]
     return dynamodb.Table(table_name)

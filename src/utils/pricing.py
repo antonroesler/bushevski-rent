@@ -1,12 +1,11 @@
 from datetime import date, time
 from decimal import Decimal
-from typing import List, Optional
 
 from models.common import BookingFees, DeliveryDistance, PricingRule
 
 
 class PricingService:
-    def __init__(self, pricing_rules: List[PricingRule]):
+    def __init__(self, pricing_rules: list[PricingRule]):
         self.pricing_rules = pricing_rules
 
     def calculate_nightly_rates(self, start_date: date, end_date: date) -> Decimal:
@@ -18,11 +17,7 @@ class PricingService:
         while current_date < end_date:  # Don't include end_date
             # Find applicable pricing rule
             rule = next(
-                (
-                    r
-                    for r in self.pricing_rules
-                    if r.start_date <= current_date <= r.end_date
-                ),
+                (r for r in self.pricing_rules if r.start_date <= current_date <= r.end_date),
                 None,
             )
 
@@ -53,9 +48,7 @@ class PricingService:
             raise ValueError(f"No pricing rule found for date {start_date}")
 
         if nights < rule.min_stay:
-            raise ValueError(
-                f"Minimum stay requirement not met. Required: {rule.min_stay} nights"
-            )
+            raise ValueError(f"Minimum stay requirement not met. Required: {rule.min_stay} nights")
 
     def calculate_fees(
         self,

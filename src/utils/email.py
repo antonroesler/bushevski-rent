@@ -1,5 +1,3 @@
-from datetime import datetime
-from typing import Optional
 
 import boto3
 from aws_lambda_powertools import Logger
@@ -19,7 +17,7 @@ class EmailService:
 
     def send_booking_confirmation(self, booking: Booking, customer: Customer) -> None:
         """Send booking confirmation email to customer."""
-        subject = f"Booking Confirmation - Bushevski Camper Rental"
+        subject = "Booking Confirmation - Bushevski Camper Rental"
 
         # Format fees
         fees = [
@@ -76,14 +74,14 @@ Bushevski Camper Rental Team
             )
             logger.info(f"Sent booking confirmation email to {customer.email}")
         except Exception as e:
-            logger.error(f"Failed to send booking confirmation email: {str(e)}")
+            logger.error(f"Failed to send booking confirmation email: {e!s}")
             raise
 
     def send_booking_status_update(
         self, booking: Booking, customer: Customer, old_status: str
     ) -> None:
         """Send booking status update email to customer."""
-        subject = f"Booking Status Update - Bushevski Camper Rental"
+        subject = "Booking Status Update - Bushevski Camper Rental"
 
         body = f"""
 Dear {customer.first_name} {customer.last_name},
@@ -115,5 +113,5 @@ Bushevski Camper Rental Team
             )
             logger.info(f"Sent status update email to {customer.email}")
         except Exception as e:
-            logger.error(f"Failed to send status update email: {str(e)}")
+            logger.error(f"Failed to send status update email: {e!s}")
             raise

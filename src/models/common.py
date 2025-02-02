@@ -1,7 +1,6 @@
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time
 from decimal import Decimal
 from enum import Enum
-from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, validator
@@ -53,7 +52,7 @@ class CustomerBase(BaseModel):
 
 class Customer(CustomerBase):
     id: UUID
-    drivers_license_url: Optional[str] = None
+    drivers_license_url: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -73,11 +72,11 @@ class BlockedDate(BaseModel):
     start_date: date
     end_date: date
     reason: BlockedDateReason
-    notes: Optional[str] = None
+    notes: str | None = None
     created_at: datetime
     updated_at: datetime
 
-    def get_dates(self) -> List[date]:
+    def get_dates(self) -> list[date]:
         """Get all dates in the blocked period."""
         dates = []
         current = self.start_date
@@ -90,10 +89,10 @@ class BlockedDate(BaseModel):
 class BookingFees(BaseModel):
     nightly_rates: Decimal
     service_fee: Decimal = Field(default=Decimal("50"))
-    early_pickup_fee: Optional[Decimal] = Field(default=Decimal("50"))
-    late_return_fee: Optional[Decimal] = Field(default=Decimal("50"))
-    parking_fee: Optional[Decimal] = None
-    delivery_fee: Optional[Decimal] = None
+    early_pickup_fee: Decimal | None = Field(default=Decimal("50"))
+    late_return_fee: Decimal | None = Field(default=Decimal("50"))
+    parking_fee: Decimal | None = None
+    delivery_fee: Decimal | None = None
 
     @validator("parking_fee", pre=True)
     def calculate_parking_fee(cls, v, values):
@@ -131,7 +130,7 @@ class BookingBase(BaseModel):
     def has_late_return(self) -> bool:
         return self.return_time.hour >= 16
 
-    def get_dates(self) -> List[date]:
+    def get_dates(self) -> list[date]:
         """Get all dates in the booking period."""
         dates = []
         current = self.start_date

@@ -13,14 +13,13 @@ test:
 	$(BIN)/pytest tests/ -v --cov=src --cov-report=term-missing
 
 lint:
-	$(BIN)/black src/ tests/
-	$(BIN)/isort src/ tests/
-	$(BIN)/flake8 src/ tests/
+	$(BIN)/ruff check src/ tests/
+	$(BIN)/ruff format --check src/ tests/
 	$(BIN)/mypy src/ tests/
 
 format:
-	$(BIN)/black src/ tests/
-	$(BIN)/isort src/ tests/
+	$(BIN)/ruff format src/ tests/
+	$(BIN)/ruff check --fix src/ tests/
 
 clean:
 	rm -rf $(VENV)
@@ -28,6 +27,7 @@ clean:
 	rm -rf .coverage
 	rm -rf htmlcov
 	rm -rf .mypy_cache
+	rm -rf .ruff_cache
 	rm -rf .aws-sam
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type d -name "*.egg-info" -exec rm -rf {} +

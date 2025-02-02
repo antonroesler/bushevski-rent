@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Any, Dict
+from typing import Any
 from uuid import UUID
 
 import pytest
@@ -42,7 +42,7 @@ def test_handle_errors():
     """Test error handling decorator."""
 
     @handle_errors
-    def test_func(error_type: str) -> Dict:
+    def test_func(error_type: str) -> dict:
         if error_type == "validation":
             raise ValidationError([], TestModel)
         elif error_type == "value":
@@ -90,7 +90,7 @@ def test_require_admin(ssm, admin_api_key: str):
     """Test admin requirement decorator."""
 
     @require_admin
-    def test_func(event: Dict[str, Any], context: Any) -> Dict:
+    def test_func(event: dict[str, Any], context: Any) -> dict:
         return {"success": True}
 
     # Test with valid API key
@@ -109,7 +109,7 @@ def test_parse_body():
     """Test request body parsing decorator."""
 
     @parse_body(TestModel)
-    def test_func(event: Dict[str, Any], context: Any) -> Dict:
+    def test_func(event: dict[str, Any], context: Any) -> dict:
         parsed_body = event["parsed_body"]
         return {
             "statusCode": 200,

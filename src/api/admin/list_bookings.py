@@ -1,5 +1,4 @@
-from datetime import date, datetime
-from typing import Optional
+from datetime import date
 
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.typing import LambdaContext
@@ -22,12 +21,8 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
 
     try:
         # Parse dates if provided
-        start_date = (
-            date.fromisoformat(params["start_date"]) if "start_date" in params else None
-        )
-        end_date = (
-            date.fromisoformat(params["end_date"]) if "end_date" in params else None
-        )
+        start_date = date.fromisoformat(params["start_date"]) if "start_date" in params else None
+        end_date = date.fromisoformat(params["end_date"]) if "end_date" in params else None
 
         # Parse status if provided
         status = BookingStatus(params["status"]) if "status" in params else None
@@ -73,9 +68,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
         if customer:
             responses.append(BookingResponse(**booking.model_dump(), customer=customer))
         else:
-            logger.error(
-                f"Customer {booking.customer_id} not found for booking {booking.id}"
-            )
+            logger.error(f"Customer {booking.customer_id} not found for booking {booking.id}")
 
     return create_response(
         200,

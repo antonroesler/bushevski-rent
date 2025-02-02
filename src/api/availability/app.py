@@ -1,10 +1,9 @@
-from datetime import date, datetime
-from typing import List, Optional
+from datetime import date
 
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
-from models.common import BlockedDate, Booking, BookingStatus, PricingRule
+from models.common import BookingStatus
 from utils.dynamodb import (
     BlockedDateRepository,
     BookingRepository,
@@ -80,9 +79,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
         # Check minimum stay requirement
         pricing_service.validate_minimum_stay(start_date, end_date)
     except ValueError as e:
-        return create_response(
-            400, {"error": "Invalid stay duration", "message": str(e)}
-        )
+        return create_response(400, {"error": "Invalid stay duration", "message": str(e)})
 
     # Calculate base price
     try:
@@ -101,11 +98,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
         ):
             is_available = False
             unavailable_dates.extend(
-                [
-                    d.isoformat()
-                    for d in booking.get_dates()
-                    if start_date <= d <= end_date
-                ]
+                [d.isoformat() for d in booking.get_dates() if start_date <= d <= end_date]
             )
 
     # Check blocked dates
@@ -115,18 +108,14 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
         ):
             is_available = False
             unavailable_dates.extend(
-                [
-                    d.isoformat()
-                    for d in blocked.get_dates()
-                    if start_date <= d <= end_date
-                ]
+                [d.isoformat() for d in blocked.get_dates() if start_date <= d <= end_date]
             )
 
     return create_response(
         200,
         {
             "is_available": is_available,
-            "unavailable_dates": sorted(list(set(unavailable_dates))),
+            "unavailable_dates": sorted(set(unavailable_dates)),
             "nightly_rates": str(nightly_rates),
             "service_fee": "50.00",
             "minimum_stay": pricing_rules[0].min_stay,

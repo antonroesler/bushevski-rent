@@ -1,7 +1,7 @@
+from collections.abc import Generator
 from datetime import date, datetime, time
 from decimal import Decimal
-from typing import Dict, Generator
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import boto3
 import pytest
@@ -16,7 +16,6 @@ from models.common import (
     BookingFees,
     BookingStatus,
     Customer,
-    CustomerBase,
     DeliveryDistance,
     PricingRule,
 )
@@ -90,9 +89,7 @@ def dynamodb_table(dynamodb, ssm) -> Table:
     )
 
     # Create SSM parameter
-    ssm.put_parameter(
-        Name="/bushevski/dynamodb/table_name", Value=table_name, Type="String"
-    )
+    ssm.put_parameter(Name="/bushevski/dynamodb/table_name", Value=table_name, Type="String")
 
     return table
 
@@ -109,9 +106,7 @@ def s3_bucket(s3, ssm) -> str:
     )
 
     # Create SSM parameter
-    ssm.put_parameter(
-        Name="/bushevski/s3/documents_bucket", Value=bucket_name, Type="String"
-    )
+    ssm.put_parameter(Name="/bushevski/s3/documents_bucket", Value=bucket_name, Type="String")
 
     return bucket_name
 
@@ -121,9 +116,7 @@ def admin_api_key(ssm) -> str:
     """Create admin API key in SSM."""
     api_key = "test-admin-key"
 
-    ssm.put_parameter(
-        Name="/bushevski/admin/api_key", Value=api_key, Type="SecureString"
-    )
+    ssm.put_parameter(Name="/bushevski/admin/api_key", Value=api_key, Type="SecureString")
 
     return api_key
 
@@ -202,7 +195,7 @@ def sample_blocked_date() -> BlockedDate:
 
 
 @pytest.fixture
-def api_gateway_event() -> Dict:
+def api_gateway_event() -> dict:
     """Create a sample API Gateway event."""
     return {
         "version": "2.0",

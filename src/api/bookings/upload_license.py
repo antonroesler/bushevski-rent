@@ -64,16 +64,12 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
     # Get booking
     booking = booking_repo.get(booking_id)
     if not booking:
-        return create_response(
-            404, {"error": "Not found", "message": "Booking not found"}
-        )
+        return create_response(404, {"error": "Not found", "message": "Booking not found"})
 
     # Get customer
     customer = customer_repo.get(booking.customer_id)
     if not customer:
-        logger.error(
-            f"Customer {booking.customer_id} not found for booking {booking_id}"
-        )
+        logger.error(f"Customer {booking.customer_id} not found for booking {booking_id}")
         return create_response(
             500,
             {"error": "Internal server error", "message": "Customer data not found"},
@@ -91,7 +87,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
     except ValueError as e:
         return create_response(400, {"error": "Upload failed", "message": str(e)})
     except Exception as e:
-        logger.error(f"Failed to upload file: {str(e)}")
+        logger.error(f"Failed to upload file: {e!s}")
         return create_response(
             500,
             {"error": "Upload failed", "message": "Failed to upload driver's license"},

@@ -1,6 +1,5 @@
 import base64
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime
 from uuid import UUID
 
 import boto3
@@ -13,9 +12,9 @@ logger = Logger()
 class StorageService:
     def __init__(self):
         self.s3 = boto3.client("s3")
-        self.bucket_name = boto3.client("ssm").get_parameter(
-            Name="/bushevski/s3/documents_bucket"
-        )["Parameter"]["Value"]
+        self.bucket_name = boto3.client("ssm").get_parameter(Name="/bushevski/s3/documents_bucket")[
+            "Parameter"
+        ]["Value"]
 
     def upload_drivers_license(
         self, booking_id: UUID, customer_email: str, file_content: str, file_type: str
@@ -35,8 +34,8 @@ class StorageService:
         try:
             file_data = base64.b64decode(file_content)
         except Exception as e:
-            logger.error(f"Failed to decode file content: {str(e)}")
-            raise ValueError("Invalid file content")
+            logger.error(f"Failed to decode file content: {e!s}")
+            raise ValueError("Invalid file content") from e
 
         # Generate S3 key
         file_extension = {
@@ -65,7 +64,7 @@ class StorageService:
             logger.info(f"Uploaded driver's license for booking {booking_id}")
             return key
         except Exception as e:
-            logger.error(f"Failed to upload file: {str(e)}")
+            logger.error(f"Failed to upload file: {e!s}")
             raise
 
     def get_download_url(self, key: str, expires_in: int = 3600) -> str:
@@ -86,7 +85,7 @@ class StorageService:
             )
             return url
         except ClientError as e:
-            logger.error(f"Failed to generate pre-signed URL: {str(e)}")
+            logger.error(f"Failed to generate pre-signed URL: {e!s}")
             raise
 
     def delete_file(self, key: str) -> None:
@@ -99,5 +98,5 @@ class StorageService:
             self.s3.delete_object(Bucket=self.bucket_name, Key=key)
             logger.info(f"Deleted file: {key}")
         except ClientError as e:
-            logger.error(f"Failed to delete file: {str(e)}")
+            logger.error(f"Failed to delete file: {e!s}")
             raise

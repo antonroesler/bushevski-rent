@@ -53,16 +53,12 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
     # Get booking
     booking = booking_repo.get(booking_id)
     if not booking:
-        return create_response(
-            404, {"error": "Not found", "message": "Booking not found"}
-        )
+        return create_response(404, {"error": "Not found", "message": "Booking not found"})
 
     # Get customer
     customer = customer_repo.get(booking.customer_id)
     if not customer:
-        logger.error(
-            f"Customer {booking.customer_id} not found for booking {booking_id}"
-        )
+        logger.error(f"Customer {booking.customer_id} not found for booking {booking_id}")
         return create_response(
             500,
             {"error": "Internal server error", "message": "Customer data not found"},
@@ -80,7 +76,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
     try:
         email_service.send_booking_status_update(booking, customer, old_status.value)
     except Exception as e:
-        logger.error(f"Failed to send status update email: {str(e)}")
+        logger.error(f"Failed to send status update email: {e!s}")
         # Don't fail the status update if email fails
 
     # Create response

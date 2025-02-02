@@ -35,7 +35,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
         # Parse dates
         start_date = datetime.strptime(request.start_date, "%Y-%m-%d").date()
         end_date = datetime.strptime(request.end_date, "%Y-%m-%d").date()
-    except ValueError as e:
+    except ValueError:
         return create_response(
             400,
             {
