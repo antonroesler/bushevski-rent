@@ -4,19 +4,8 @@ from uuid import uuid4
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
-from models.common import (
-    Booking,
-    BookingResponse,
-    BookingStatus,
-    CreateBookingRequest,
-    Customer,
-)
-from utils.dynamodb import (
-    BookingRepository,
-    CustomerRepository,
-    PricingRuleRepository,
-    get_table,
-)
+from models.common import Booking, BookingResponse, BookingStatus, CreateBookingRequest, Customer
+from utils.dynamodb import BookingRepository, CustomerRepository, PricingRuleRepository, get_table
 from utils.email import EmailService
 from utils.middleware import create_response, handle_errors, parse_body
 from utils.pricing import PricingService
