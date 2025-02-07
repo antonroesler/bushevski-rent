@@ -1,52 +1,10 @@
-# Python
+# python generated files
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+*.py[oc]
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
 wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+*.egg-info
 
-# Virtual Environment
-.env
+# venv
 .venv
-env/
-venv/
-ENV/
-
-# AWS SAM
-.aws-sam/
-samconfig.toml
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Testing
-.coverage
-htmlcov/
-.pytest_cache/
-.tox/
-
-# Local Development
-*.db
-local_dev/ 
