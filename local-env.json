@@ -1,0 +1,11 @@
+{
+  "ApiFunction": {
+    "DYNAMODB_TABLE": "bushevski-rental-local",
+    "LICENSES_BUCKET": "bushevski-licenses-local",
+    "STAGE": "local",
+    "POWERTOOLS_SERVICE_NAME": "bushevski-rental",
+    "POWERTOOLS_METRICS_NAMESPACE": "BushevskiRental",
+    "LOG_LEVEL": "DEBUG",
+    "AWS_DEFAULT_REGION": "eu-central-1"
+  }
+} 

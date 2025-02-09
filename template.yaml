@@ -1,0 +1,272 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Description: Bushevski Camper Rental API
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    Description: Deployment stage
+  StripeSecretKey:
+    Type: String
+    Description: Stripe secret key
+    NoEcho: true
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: python3.11
+    Environment:
+      Variables:
+        POWERTOOLS_SERVICE_NAME: bushevski-rental
+        POWERTOOLS_METRICS_NAMESPACE: BushevskiRental
+        LOG_LEVEL: INFO
+        STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY}
+    Layers:
+      - !Ref DependenciesLayer
+  Api:
+    Cors:
+      AllowMethods: "'*'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
+    EndpointConfiguration: REGIONAL
+
+Resources:
+  # Lambda Layer for Dependencies
+  DependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub ${AWS::StackName}-dependencies
+      Description: Dependencies for the API
+      ContentUri: layer.zip
+      CompatibleRuntimes:
+        - python3.11
+      RetentionPolicy: Retain
+
+  # DynamoDB Table
+  RentalTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub bushevski-rental-${Stage}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # S3 Bucket for driver's licenses
+  LicensesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub bushevski-licenses-${Stage}-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - PUT
+              - POST
+              - GET
+            AllowedOrigins:
+              - "*"
+            MaxAge: 3600
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldFiles
+            Status: Enabled
+            ExpirationInDays: 30
+
+  # API Lambda Function
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src
+      Handler: api.router.handler
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref RentalTable
+          LICENSES_BUCKET: !Ref LicensesBucket
+          STAGE: !Ref Stage
+          STRIPE_SECRET_KEY: !Ref StripeSecretKey
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RentalTable
+        - S3CrudPolicy:
+            BucketName: !Ref LicensesBucket
+      Events:
+        AnyApiEvent:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            RestApiId: !Ref ApiGateway
+
+  # API Gateway
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Stage
+      OpenApiVersion: "2.0"
+      EndpointConfiguration:
+        Type: REGIONAL
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          title: !Sub ${AWS::StackName}
+        basePath: !Sub /${Stage}
+        schemes:
+          - https
+        securityDefinitions:
+          api_key:
+            type: apiKey
+            name: x-api-key
+            in: header
+        paths:
+          /admin/{proxy+}:
+            options:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: "string"
+                    Access-Control-Allow-Methods:
+                      type: "string"
+                    Access-Control-Allow-Headers:
+                      type: "string"
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+            x-amazon-apigateway-any-method:
+              security:
+                - api_key: []
+              parameters:
+                - name: proxy
+                  in: path
+                  required: true
+                  type: string
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+              responses: {}
+          /{proxy+}:
+            options:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: "string"
+                    Access-Control-Allow-Methods:
+                      type: "string"
+                    Access-Control-Allow-Headers:
+                      type: "string"
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+            x-amazon-apigateway-any-method:
+              parameters:
+                - name: proxy
+                  in: path
+                  required: true
+                  type: string
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+              responses: {}
+
+  # Create API Key
+  ApiGatewayApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Name: !Sub ${AWS::StackName}-admin-key
+      Description: API Key for admin routes
+      Enabled: true
+      StageKeys:
+        - RestApiId: !Ref ApiGateway
+          StageName: !Ref Stage
+
+  # Create Usage Plan
+  ApiGatewayUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      ApiStages:
+        - ApiId: !Ref ApiGateway
+          Stage: !Ref Stage
+      Description: Usage plan for admin API
+      Quota:
+        Limit: 5000
+        Period: MONTH
+      Throttle:
+        BurstLimit: 100
+        RateLimit: 50
+      UsagePlanName: !Sub ${AWS::StackName}-usage-plan
+
+  # Associate API Key with Usage Plan
+  ApiGatewayUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ApiGatewayApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref ApiGatewayUsagePlan
+
+  # CloudWatch Log Group
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ApiFunction}
+      RetentionInDays: 30
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/
+
+  ApiKey:
+    Description: API Key for admin routes
+    Value: !Ref ApiGatewayApiKey
+
+  RentalTableName:
+    Description: DynamoDB table name
+    Value: !Ref RentalTable
+
+  LicensesBucketName:
+    Description: S3 bucket for driver's licenses
+    Value: !Ref LicensesBucket

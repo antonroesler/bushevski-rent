@@ -5,6 +5,16 @@ build/
 dist/
 wheels/
 *.egg-info
+.ruff_cache
 
 # venv
 .venv
+
+# env
+.env
+
+# Build files
+build/
+.aws-sam/
+layer.zip
+layers

@@ -5,7 +5,11 @@ description = "Add your description here"
 authors = [
     { name = "Anton Rösler", email = "github@antonroesler.com" }
 ]
-dependencies = []
+dependencies = [
+    "pydantic>=2.10.6",
+    "aws-lambda-powertools>=3.5.0",
+    "stripe>=11.5.0",
+]
 readme = "README.md"
 requires-python = ">= 3.8"
 

@@ -1,0 +1,10 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "bushevski-rental-dev"
+resolve_s3 = true
+s3_prefix = "bushevski-rental-dev"
+region = "eu-central-1"
+profile = "default"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=\"dev\""
+image_repositories = []

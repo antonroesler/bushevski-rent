@@ -1,0 +1,469 @@
+openapi: 3.0.0
+info:
+  title: Bushevski Rental API
+  version: 1.0.0
+  description: API for managing camper van rentals
+
+servers:
+  - url: https://api.bushevski-rental.com/dev
+    description: Development server
+
+components:
+  schemas:
+    Customer:
+      type: object
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+
+    BookingRequest:
+      type: object
+      required:
+        - start_date
+        - end_date
+        - pickup_time
+        - return_time
+        - customer
+      properties:
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        pickup_time:
+          type: string
+          format: time
+        return_time:
+          type: string
+          format: time
+        customer:
+          $ref: "#/components/schemas/Customer"
+        parking:
+          type: boolean
+          default: false
+        delivery_distance:
+          type: integer
+          nullable: true
+
+    PriceCalculation:
+      type: object
+      properties:
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        nights:
+          type: integer
+        pricing:
+          type: object
+          properties:
+            nightly_rates:
+              type: object
+              properties:
+                breakdown:
+                  type: object
+                  additionalProperties:
+                    type: string
+                total:
+                  type: string
+            fees:
+              type: object
+              properties:
+                service_fee:
+                  type: string
+                parking_fee:
+                  type: string
+                  nullable: true
+                delivery_fee:
+                  type: string
+                  nullable: true
+            total_price:
+              type: string
+
+    BookingResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        booking_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, completed, cancelled]
+        total_price:
+          type: string
+        price_breakdown:
+          type: object
+          properties:
+            nightly_rates:
+              type: object
+              properties:
+                breakdown:
+                  type: object
+                  additionalProperties:
+                    type: string
+                total:
+                  type: string
+            fees:
+              type: object
+              properties:
+                service_fee:
+                  type: string
+                parking_fee:
+                  type: string
+                  nullable: true
+                delivery_fee:
+                  type: string
+                  nullable: true
+
+    AdminBookingResponse:
+      type: object
+      properties:
+        bookings:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              start_date:
+                type: string
+                format: date
+              end_date:
+                type: string
+                format: date
+              status:
+                type: string
+                enum: [pending, confirmed, completed, cancelled]
+              customer:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  phone:
+                    type: string
+              schedule:
+                type: object
+                properties:
+                  pickup_time:
+                    type: string
+                    format: time
+                  return_time:
+                    type: string
+                    format: time
+              services:
+                type: object
+                properties:
+                  parking:
+                    type: boolean
+                  delivery_distance:
+                    type: integer
+                    nullable: true
+              pricing:
+                type: object
+                properties:
+                  nightly_rates:
+                    type: object
+                    properties:
+                      breakdown:
+                        type: object
+                        additionalProperties:
+                          type: string
+                      total:
+                        type: string
+                  fees:
+                    type: object
+                    properties:
+                      service_fee:
+                        type: string
+                      parking_fee:
+                        type: string
+                        nullable: true
+                      delivery_fee:
+                        type: string
+                        nullable: true
+                  total_price:
+                    type: string
+        count:
+          type: integer
+
+    PricingRuleResponse:
+      type: object
+      properties:
+        rules:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              start_date:
+                type: string
+                format: date
+              end_date:
+                type: string
+                format: date
+              nightly_rate:
+                type: string
+              duration_days:
+                type: integer
+              notes:
+                type: string
+                nullable: true
+              created_at:
+                type: string
+                format: date-time
+        count:
+          type: integer
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+paths:
+  /bookings:
+    post:
+      summary: Create a new booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingRequest"
+      responses:
+        "200":
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+        "400":
+          description: Invalid request
+        "409":
+          description: Dates not available
+
+  /bookings/availability:
+    get:
+      summary: Check availability for dates
+      parameters:
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Availability information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  start_date:
+                    type: string
+                    format: date
+                  end_date:
+                    type: string
+                    format: date
+                  blocked_dates:
+                    type: object
+                    additionalProperties:
+                      type: string
+                      enum: [booking, maintenance, private, other]
+
+  /bookings/calculate-price:
+    post:
+      summary: Calculate price for a potential booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                parking:
+                  type: boolean
+                  default: false
+                delivery_distance:
+                  type: integer
+                  nullable: true
+      responses:
+        "200":
+          description: Price calculation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceCalculation"
+
+  /bookings/{booking_id}/drivers-license/upload-url:
+    post:
+      summary: Get presigned URL for license upload
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filename:
+                  type: string
+      responses:
+        "200":
+          description: Upload URL generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upload_url:
+                    type: string
+                    format: uri
+                  key:
+                    type: string
+                  expires_in:
+                    type: integer
+
+  /admin/bookings:
+    get:
+      summary: List all bookings
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, completed, cancelled]
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminBookingResponse"
+        "401":
+          description: Unauthorized
+
+  /admin/pricing-rules:
+    get:
+      summary: List pricing rules
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: List of pricing rules
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricingRuleResponse"
+
+    post:
+      summary: Create pricing rule
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                nightly_rate:
+                  type: string
+                notes:
+                  type: string
+                  nullable: true
+      responses:
+        "200":
+          description: Pricing rule created
+        "401":
+          description: Unauthorized
+
+  /bookings/pricing:
+    get:
+      summary: Get pricing information
+      parameters:
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Pricing information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  start_date:
+                    type: string
+                    format: date
+                  end_date:
+                    type: string
+                    format: date
+                  daily_rates:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  fees:
+                    type: object
+                    properties:
+                      parking_fee_per_night:
+                        type: string
+                      delivery_fee_per_km:
+                        type: string
